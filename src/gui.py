@@ -40,28 +40,26 @@ class GUI:
         if self.pipeConnection.poll():
             self.newCmd = self.pipeConnection.recv()
 
-        match self.newCmd:
-            case "read":
+        if self.newCmd == "read":
+            if self.startTime == None:
+                self.startTime = time.time()
+                self.refresh = True
 
-                if self.startTime == None:
-                    self.startTime = time.time()
-                    self.refresh = True
+            self.read()
 
-                self.read()
+        if self.newCmd == "stop":
+            time.sleep(0.1)
+            self.read()
+            self.refresh = False
+            self.startTime = None
+            self.newCmd = None
 
-            case "stop":
-                time.sleep(0.1)
-                self.read()
-                self.refresh = False
-                self.startTime = None
-                self.newCmd = None
+        if self.newCmd == "add sensor":
+            self.sensors += [self.dataQueue.get()]
 
-            case "add sensor":
-                self.sensors += [self.dataQueue.get()]
-                
-            case "off":
-                self.on = False
-                self.newCmd = None
+        if self.newCmd == "off":
+            self.on = False
+            self.newCmd = None
 
     ### Functions for commands ###
     def read(self):

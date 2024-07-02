@@ -54,18 +54,18 @@ def sensorWrapper(sensors, dataQueue, commandPipe):
         if commandPipe.poll():
             newCmd = commandPipe.recv()
 
-        match newCmd:
+        # Use if instead of match due to python 3.9.2
 
-            case "read":
-                startTime = time.time()
-                beginRead = True
+        if newCmd == "read":
+            startTime = time.time()
+            beginRead = True
 
-            case "stop":
-                beginRead = False
+        if newCmd == "stop":
+            beginRead = False
 
-            case "off":
-                shutDown = True
-                break
+        if newCmd == "off":
+            shutDown = True
+            break
         newCmd = None # Makes each of these cases run once uppon recieving a new command
 
         if beginRead:
@@ -134,14 +134,11 @@ def main():
     selectedSensors =[]
     for className in settingsDict['selectedSensors']:
         
-        match className:
-            case "sinSensor":
-                selectedSensors += [sinSensor()]
-            case "cosSensor":
-                selectedSensors += [cosSensor()]
-
-    print(selectedSensors)
-    input()
+        if className == "sinSensor":
+            selectedSensors += [sinSensor()]
+        
+        if className == "cosSensor":
+            selectedSensors += [cosSensor()]
     
     ### Create GUI
     guiQueue = Queue()
