@@ -1,14 +1,16 @@
 import asciichartpy as acp
 import time
 import numpy as np
+import os
+import subprocess
 
 class GUI:
     """Class responsbile for creating and managing the terminal GUI"""
 
-    def __init__(self, pipeConnection, dataQueue):
+    def __init__(self, pipeConnection, dataQueue, sensors):
         self.pipeConnection = pipeConnection
         self.dataQueue = dataQueue
-        self.sensors = []
+        self.sensors = sensors
         self.refresh = False # Controls if entire GUI is updated continuosly
 
         self.startTime = None
@@ -18,10 +20,10 @@ class GUI:
         self.config = {'colors': [acp.red, acp.green, acp.yellow, acp.blue,  # All colors available to asciichartpy
                      acp.magenta, acp.cyan, acp.lightgray, acp.default,
                      acp.darkgray, acp.lightred, acp.lightgreen, acp.lightyellow,
-                     acp.lightblue, acp.lightmagenta, acp.lightcyan, acp.white],
-                     'min': -3, 'max': 3}
+                     acp.lightblue, acp.lightmagenta, acp.lightcyan, acp.white]}
         
-        # Draw first frame on start up
+        # Draw first frame on start up, clear the console for more consistent printing
+        os.system("clear")
         self.drawGUI()
         
 
@@ -68,9 +70,19 @@ class GUI:
             self.data = self.dataQueue.get()
 
     def drawGUI(self):
+        """Draws a single 'frame' of the GUI.
+        Note: It's important to create a single string to print once, so that terminal
+        autoscroll is minimized and reaches a 'steady state' where the terminal tries to get
+        all of the new information in the window."""
 
         ## Header information ##
-        print("Pull Tester")
+        GUIString = "Pull Tester \nCurrent LAN accessible IP: "
+        ip = subprocess.run(["hostname", "-I"], stdout=subprocess.PIPE).stdout.decode('utf-8')[:-2] # Removes the \n
+        GUIString += ip
+
+        ## Button reminder/instructions
+        GUIString += f"        Press the {acp.lightgreen}O{acp.reset} button to begin/stop collecting data.\n"
+
         # TODO: Print IP address
         # TODO: Print available and selected sensors
 
@@ -80,31 +92,22 @@ class GUI:
 
             if self.data != None:
                 now = time.time() - self.startTime
-                thirtySecondsAgo = now - 10
-
-                for i, row in enumerate(self.data):
-                    timeOfMeasurement = row[0]
-                    #print(self.data)
-                    #print(row[0])
-                    if timeOfMeasurement < thirtySecondsAgo:
-                        self.data.pop(i)
-
-                terminalGraphData = np.array(self.data)[:, 1:].T.tolist()
+                terminalGraphData = np.array(self.data)[-125:, 1:].T.tolist()
 
             # Print/display graph data
-            print(acp.plot(terminalGraphData, self.config))
+            GUIString += acp.plot(terminalGraphData, self.config) + '\n'
 
             # Print x-axis
-            print(f"          ----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|")
+            GUIString += "          ----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|\n"
             if self.data != None:
-                print(f"Time elapsed: {now}")
+                GUIString += f"Time elapsed: {now:.2f}\n"
 
-            # Legend
-            print("Graph Legend:")
-            for sensor, color in zip(self.sensors, self.config['colors']):
-                print(f"{color}{sensor.name}\n")
-                print("\033[0m")
+        # Legend (display it always to show which sensors are connected)
+        GUIString += "Current Sensors:\n"
+        for sensor, color in zip(self.sensors, self.config['colors']):
+            GUIString += f"{color}{sensor.name} \033[0m\n"
 
+        print(GUIString)
 
 
 

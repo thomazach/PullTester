@@ -1,4 +1,8 @@
-convert: false
+columnNames:
+- Sin
+- Cos
+convert: true
+sampleRate: null
 selectedSensors:
-- cosSensor
 - sinSensor
+- cosSensor

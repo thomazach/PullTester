@@ -8,7 +8,7 @@ class cosSensor:
 
         # Important constants
         self.maxReadFrequency = 20 # Hz
-        self.type = "cos" # For testing only
+        self.name = "cos"
 
         self.time = 0. # Counter for sin
         # Connect/intialize with a sensor
@@ -19,3 +19,6 @@ class cosSensor:
         val = math.cos(self.time)
         self.time += 0.2
         return val
+    
+    def convert(self, val):
+        return val * 10
