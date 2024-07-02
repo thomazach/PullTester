@@ -13,6 +13,7 @@ baseDir = thisDir[0:thisDir.find("PullTester") + 10]
 sys.path.append(baseDir)
 os.chdir(baseDir)
 
+
 from sensors.sinSensor import sinSensor
 from sensors.cosSensor import cosSensor
 from src.gui import GUI
@@ -113,35 +114,40 @@ def writeCSV(data, runNumber, sensorNames):
 
 def main():
 
-    """Dev thing to correctly format yaml file with new test variables"""
-    settingsDict = {'selectedSensors': ["cosSensor", "sinSensor"],
-     'convert': False,
-     'sampleRate': 10,
-     'columnNames': ["Cos", "Sin"]
-    }
+    # """Dev thing to correctly format yaml file with new test variables"""
+    # settingsDict = {'selectedSensors': ["cosSensor", "sinSensor"],
+    #  'convert': False,
+    #  'sampleRate': 10,
+    #  'columnNames': ["Cos", "Sin"]
+    # }
     
-    with open("config.yaml", "w") as f:
-        yaml.dump(settingsDict, f)
+    # with open("config.yaml", "w") as f:
+    #     yaml.dump(settingsDict, f)
     
-    return
-
+    # return
 
     ### Load from config file
     with open("config.yaml", "r") as f:
         settingsDict = yaml.safe_load(f)
 
-    print(settingsDict)
-    return
+
+    selectedSensors =[]
+    for className in settingsDict['selectedSensors']:
+        
+        match className:
+            case "sinSensor":
+                selectedSensors += [sinSensor()]
+            case "cosSensor":
+                selectedSensors += [cosSensor()]
+
+    print(selectedSensors)
+    input()
     
     ### Create GUI
     guiQueue = Queue()
     guiParent, guiChild = Pipe()
     terminalGUI = GUI(guiChild, guiQueue)
     Process(target=terminalGUI.mainLoop).start()
-
-    # TODO: Implement sensor selection, for now, it will be a list
-    selectedSensors = [sinSensor(), cosSensor()] # Note that the mere call to the class connects each sensor
-    # TODO: Implement mode selection
 
     sensorQueue = Queue()
     parentPipe, childPipe = Pipe()
