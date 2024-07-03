@@ -26,24 +26,28 @@ class dataCollector:
         self.dataQueue = dataQueue
         self.commandPipe = commandPipe
         self.settingsDict = settingsDict
-
-        # Get the sample rate, if none is provided use the slowest sensor as the maximum sample rate
-        if settingsDict['sampleRate'] == None:
-            maxReadFrequency = []
-            for sensor in sensors:
-                maxReadFrequency += [sensor.maxReadFrequency]
-            maxReadFrequency = min(maxReadFrequency)
-        else:
-            if isinstance(settingsDict['sampleRate'], (float, int)):
-                maxReadFrequency = settingsDict['sampleRate']
-            else:
-                print(f"ERROR: Bad sampleRate value in config.yaml, must be of type int or float.")
-        self.maxReadFrequency = maxReadFrequency
-
+        
+        # Set the max read frequency
+        self.setMaxReadFrequency()
+        
         # Control variables for the main loop
         self.shutDown = False
         self.beginRead = False
         self.newCmd = None
+
+    def setMaxReadFrequency(self):
+        # Get the sample rate, if none is provided use the slowest sensor as the maximum sample rate
+        if self.settingsDict['sampleRate'] == None:
+            maxReadFrequency = []
+            for sensor in self.sensors:
+                maxReadFrequency += [sensor.maxReadFrequency]
+            maxReadFrequency = min(maxReadFrequency)
+        else:
+            if isinstance(self.settingsDict['sampleRate'], (float, int)):
+                maxReadFrequency = self.settingsDict['sampleRate']
+            else:
+                print(f"ERROR: Bad sampleRate value in config.yaml, must be of type int or float.")
+        self.maxReadFrequency = maxReadFrequency
 
     def setSettingsDict(self, settingsDict):
         """Setter method for settings dictionary. Used to update the settings used to collect

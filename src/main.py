@@ -164,7 +164,7 @@ def main():
                 if len(yamlFilePath) != 0: # There is a custom config.yaml file on the flash drive
                     print("Found a config file on the flashdrive, this config will be used while flashdrive is connected.")
                     # Get the settings in config.yaml on the flash drive
-                    settingsDict = loadYaml(yamlFilePath)
+                    settingsDict = loadYaml(yamlFilePath[0])
                     selectedSensors = getSelectedSensors(settingsDict['selectedSensors'])
                                 
                     # Update the sensor process
@@ -178,6 +178,7 @@ def main():
                     guiParent.send(selectedSensors)
 
                 else: # There isn't a custom yaml file and we need to put a copy of the default one onto the flash drive
+                    print("The config.yaml file couldn't be found on the first level of the flashdrive. A copy of the default configuration has been copied to the flashdrive.")
                     os.system(f"cp config.yaml {flashDrives[0]}/config.yaml")
 
 
