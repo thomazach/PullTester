@@ -56,8 +56,8 @@ class GUI:
             self.startTime = None
             self.newCmd = None
 
-        if self.newCmd == "add sensor":
-            self.sensors += [self.dataQueue.get()]
+        if self.newCmd == "set sensors":
+            self.setSensors(self.pipeConnection.recv())
 
         if self.newCmd == "off":
             self.on = False

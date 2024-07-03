@@ -76,6 +76,13 @@ class dataCollector:
             if self.newCmd == "off":
                 self.shutDown = True
                 break
+
+            if self.newCmd == "set sensors":
+                self.setSensors(self.commandPipe.recv())
+            
+            if self.newCmd == "set settings":
+                self.setSettingsDict(self.commandPipe.recv())
+
             self.newCmd = None # Makes each of these cases run once uppon recieving a new command
 
             if self.beginRead:

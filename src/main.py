@@ -236,11 +236,14 @@ def main():
                         selectedSensors += [cosSensor()]
                             
                 # Update the sensor process
-                sensorReader.setSensors(selectedSensors)
-                sensorReader.setSettingsDict(settingsDict)
+                parentPipe.send("set sensors")
+                parentPipe.send(selectedSensors)
+                parentPipe.send("set settings")
+                parentPipe.send(settingsDict)
 
                 # Update the GUI process
-                terminalGUI.setSensors(selectedSensors)
+                guiParent.send("set sensors")
+                guiParent.send(selectedSensors)
 
             elif len(flashDrives) == 0 and connected == True:
                 connected = False
