@@ -27,77 +27,25 @@ from sensors.cosSensor import cosSensor
 from src.gui import GUI
 from src.dataCollector import dataCollector
 
-# ### Data collection functions ###
-# def sensorWrapper(sensors, dataQueue, commandPipe, settingsDict):
-#     """This function facilitates the reading of sensors when requested. Its been seperated from the
-#     read() method of each unique sensor class to reduce repeated code and make the creation of new 
-#     custom sensors easier.
+def loadYaml(path):
+    with open(path, "r") as f:
+        contents = yaml.safe_load(f)
     
-#     Input:
-#         sensors: 
-#             A list where each element is an object representing a sensor with the required constants and
-#             read() method (see sensors/Custom Sensor Format/SensorNameHere.py)
-#         dataQueue:
-#             The multiprocessing.Queue assigned to store this sensors data
-#         commandPipe:
-#             Pipe used to recieve collect, stop, and shutdown commands
-    
-#     Output:
-#         val: int, or float
-#             Raw sensor value, val is not directly returned, but instead put into the dataQueue
-            
-#     """
+    return contents
 
-#     # Find lowest read speed
-#     if settingsDict['sampleRate'] == None:
-#         maxReadFrequency = []
-#         for sensor in sensors:
-#             maxReadFrequency += [sensor.maxReadFrequency]
-#         maxReadFrequency = min(maxReadFrequency)
-#     else:
-#         if isinstance(settingsDict['sampleRate'], (float, int)):
-#             maxReadFrequency = settingsDict['sampleRate']
-#         else:
-#             print(f"ERROR: Bad sampleRate value in config.yaml, must be of type int or float.")
+def getSelectedSensors(sensorNames: list[str]):
+    """Match sensor string names with instances of their respective sensor objects"""
 
-#     # Setup logic for this process and start listening for commands
-#     shutDown = False
-#     beginRead = False
-#     newCmd = None
-#     while not shutDown:
+    selectedSensors = []
+    for sensorName in sensorNames:
+        # Using if elif since hardware is running on python 3.9.2 and upgrading just for match case is not worth it
+        if sensorName == "sinSensor":
+            selectedSensors += [sinSensor()]
+        
+        elif sensorName == "cosSensor":
+            selectedSensors += [cosSensor()]
 
-#         if commandPipe.poll():
-#             newCmd = commandPipe.recv()
-
-#         # Use if instead of match due to python 3.9.2
-
-#         if newCmd == "read":
-#             startTime = time.time()
-#             beginRead = True
-
-#         if newCmd == "stop":
-#             beginRead = False
-
-#         if newCmd == "off":
-#             shutDown = True
-#             break
-#         newCmd = None # Makes each of these cases run once uppon recieving a new command
-
-#         if beginRead:
-#             data = [time.time() - startTime]
-#             for sensor in sensors:
-#                 val = None
-#                 # Convert if requested, default to storing raw values
-#                 if settingsDict['convert'] == True:
-#                     data += [sensor.convert(sensor.read())]
-#                 else:
-#                     data += [sensor.read()]
-
-#             dataQueue.put(data)
-#             time.sleep(1 / maxReadFrequency)
-#             continue
-
-#         time.sleep(0.1) # Check if we should be reading sensors every tenth of a second
+    return selectedSensors
 
 def queueReader(dataQueue):
     """Reads from a queue and centralizes the information into a multi dimensional array.
@@ -173,17 +121,8 @@ def main():
     # return
 
     ### Load settings from default config file ###
-    with open("config.yaml", "r") as f:
-        settingsDict = yaml.safe_load(f)
-
-    selectedSensors = []
-    for className in settingsDict['selectedSensors']:
-        
-        if className == "sinSensor":
-            selectedSensors += [sinSensor()]
-        
-        if className == "cosSensor":
-            selectedSensors += [cosSensor()]
+    settingsDict = loadYaml("config.yaml")
+    selectedSensors = getSelectedSensors(settingsDict['selectedSensors'])
     
     ### Create GUI process ###
     guiQueue = Queue()
@@ -220,30 +159,26 @@ def main():
                 connected = True
                 print(f"Detected new flash drive at: {flashDrives[0]}    Searching for config.yaml file")
                 time.sleep(0.5)
-                yamlFilePath = glob.glob(f"{flashDrives[0]}/config.yaml")[0]
+                yamlFilePath = glob.glob(f"{flashDrives[0]}/config.yaml")
 
-                # Get the settings in config.yaml on the flash drive
-                with open(yamlFilePath, "r") as f:
-                    settingsDict = yaml.safe_load(f)
-                
-                selectedSensors = []
-                for className in settingsDict['selectedSensors']:
-                    
-                    if className == "sinSensor":
-                        selectedSensors += [sinSensor()]
-                    
-                    if className == "cosSensor":
-                        selectedSensors += [cosSensor()]
-                            
-                # Update the sensor process
-                parentPipe.send("set sensors")
-                parentPipe.send(selectedSensors)
-                parentPipe.send("set settings")
-                parentPipe.send(settingsDict)
+                if len(yamlFilePath) != 0: # There is a custom config.yaml file on the flash drive 
+                    # Get the settings in config.yaml on the flash drive
+                    settingsDict = loadYaml(yamlFilePath)
+                    selectedSensors = getSelectedSensors(settingsDict['selectedSensors'])
+                                
+                    # Update the sensor process
+                    parentPipe.send("set sensors")
+                    parentPipe.send(selectedSensors)
+                    parentPipe.send("set settings")
+                    parentPipe.send(settingsDict)
 
-                # Update the GUI process
-                guiParent.send("set sensors")
-                guiParent.send(selectedSensors)
+                    # Update the GUI process
+                    guiParent.send("set sensors")
+                    guiParent.send(selectedSensors)
+
+                else: # There isn't a custom yaml file and we need to put a copy of the default one onto the flash drive
+                    os.system(f"cp config.yaml {flashDrives[0]}/config.yaml")
+
 
             elif len(flashDrives) == 0 and connected == True:
                 connected = False
