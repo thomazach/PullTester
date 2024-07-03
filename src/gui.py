@@ -12,6 +12,7 @@ class GUI:
         self.dataQueue = dataQueue
         self.sensors = sensors
         self.refresh = False # Controls if entire GUI is updated continuosly
+        self.runNumber = 0
 
         self.startTime = None
         self.newCmd = None
@@ -46,6 +47,7 @@ class GUI:
             if self.startTime == None:
                 self.startTime = time.time()
                 self.refresh = True
+                self.runNumber += 1
 
             self.read()
 
@@ -82,6 +84,7 @@ class GUI:
 
         ## Button reminder/instructions
         GUIString += f"        Press the {acp.lightgreen}O{acp.reset} button to begin/stop collecting data.\n"
+        GUIString += f"Run {self.runNumber}\n"
 
         # TODO: Print IP address
         # TODO: Print available and selected sensors

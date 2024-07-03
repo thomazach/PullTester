@@ -5,6 +5,7 @@ import csv
 import time
 import yaml
 import threading
+import glob
 
 from multiprocessing import Process, Queue, Pipe
 from datetime import datetime, timedelta
@@ -84,10 +85,6 @@ def sensorWrapper(sensors, dataQueue, commandPipe, settingsDict):
                 val = None
                 # Convert if requested, default to storing raw values
                 if settingsDict['convert'] == True:
-                    # val = sensor.read()
-                    # print(val)
-                    # conv = sensor.convert(val)
-                    # print(conv)
                     data += [sensor.convert(sensor.read())]
                 else:
                     data += [sensor.read()]
@@ -125,16 +122,19 @@ def pipeMessager(pipes, command):
 ### Matplotlib formal graphing functions ###
 
 ### CSV and data sharing functions ### 
-def writeCSV(data, runNumber, settingsDict):
+def writeCSV(data, runNumber, settingsDict, path=None):
 
+    if path == None:
+        path = baseDir
 
     # Get useful time strings
     now = datetime.now()
     day = now.strftime("%m-%d-%Y")
-    hour = now.strftime("%I:%M%p")
+    hour = now.strftime("%I_%M_%p")
 
-    os.system(f"mkdir -p {baseDir}/Data/{day}/Run && touch {baseDir}/Data/{day}/Run{runNumber}_{hour}.csv")
-    with open(f"{baseDir}/Data/{day}/Run{runNumber}_{hour}.csv", 'w', newline='') as f:
+    
+    os.system(f"mkdir -p {path}/Data/{day} && touch {path}/Data/{day}/Run{runNumber}_{hour}.csv")
+    with open(f"{path}/Data/{day}/Run{runNumber}_{hour}.csv", 'w', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(["Time (seconds)"] + settingsDict['columnNames'])
         writer.writerows(data)  
@@ -172,7 +172,6 @@ def main():
     with open("config.yaml", "r") as f:
         settingsDict = yaml.safe_load(f)
 
-
     selectedSensors =[]
     for className in settingsDict['selectedSensors']:
         
@@ -202,14 +201,13 @@ def main():
     # Control logic
     global doCollect
     firstCollection = True
+    connected = False # Flash drive
 
     # Counters
     runNumber = 0
     
     while True:
 
-        #print("Main loop")
-        #print(doCollect)
         if doCollect:
             if firstCollection:
                 runNumber += 1
@@ -225,11 +223,20 @@ def main():
                 guiQueue.put(data)
 
         elif firstCollection == False:
+            # Stop collection with messaging and logic vars
             firstCollection = True
             pipeMessager(parentCommandPipes + [guiParent], "stop")
+
+            # Determine if flash drive is plugged in
+            flashDrives = glob.glob("/media/pulltester/*")
+        
             # Write to CSV
-            writeCSV(data, runNumber, settingsDict)
-            # Then:
+            if len(flashDrives) >= 1:
+                writeCSV(data, runNumber, settingsDict, flashDrives[0])
+            else:
+                writeCSV(data, runNumber, settingsDict)
+
+            # Clear last run from RAM
             data = []
   
 if __name__ == "__main__":
