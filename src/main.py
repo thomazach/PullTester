@@ -219,6 +219,7 @@ def main():
             if len(flashDrives) >= 1 and connected == False:
                 connected = True
                 print(f"Detected new flash drive at: {flashDrives[0]}    Searching for config.yaml file")
+                time.sleep(0.5)
                 yamlFilePath = glob.glob(f"{flashDrives[0]}/config.yaml")[0]
 
                 # Get the settings in config.yaml on the flash drive

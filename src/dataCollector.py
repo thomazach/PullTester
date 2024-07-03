@@ -63,22 +63,22 @@ class dataCollector:
         while not self.shutDown:
 
             if self.commandPipe.poll():
-                newCmd = self.commandPipe.recv()
+                self.newCmd = self.commandPipe.recv()
 
             # Use if instead of match due to python 3.9.2
-            if newCmd == "read":
+            if self.newCmd == "read":
                 startTime = time.time()
-                beginRead = True
+                self.beginRead = True
 
-            if newCmd == "stop":
-                beginRead = False
+            if self.newCmd == "stop":
+                self.beginRead = False
 
-            if newCmd == "off":
-                shutDown = True
+            if self.newCmd == "off":
+                self.shutDown = True
                 break
-            newCmd = None # Makes each of these cases run once uppon recieving a new command
+            self.newCmd = None # Makes each of these cases run once uppon recieving a new command
 
-            if beginRead:
+            if self.beginRead:
                 data = [time.time() - startTime]
                 for sensor in self.sensors:
                     val = None
