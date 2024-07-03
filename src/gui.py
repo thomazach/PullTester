@@ -58,6 +58,7 @@ class GUI:
 
         if self.newCmd == "set sensors":
             self.setSensors(self.pipeConnection.recv())
+            self.newCmd = None
 
         if self.newCmd == "off":
             self.on = False
