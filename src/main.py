@@ -176,7 +176,7 @@ def main():
     with open("config.yaml", "r") as f:
         settingsDict = yaml.safe_load(f)
 
-    selectedSensors =[]
+    selectedSensors = []
     for className in settingsDict['selectedSensors']:
         
         if className == "sinSensor":
@@ -226,11 +226,21 @@ def main():
                 with open(yamlFilePath, "r") as f:
                     settingsDict = yaml.safe_load(f)
                 
+                selectedSensors = []
+                for className in settingsDict['selectedSensors']:
+                    
+                    if className == "sinSensor":
+                        selectedSensors += [sinSensor()]
+                    
+                    if className == "cosSensor":
+                        selectedSensors += [cosSensor()]
+                            
                 # Update the sensor process
-
+                sensorReader.setSensors(selectedSensors)
+                sensorReader.setSettingsDict(settingsDict)
 
                 # Update the GUI process
-                terminalGUI.setSensors(settingsDict['selectedSensors'])
+                terminalGUI.setSensors(selectedSensors)
 
             elif len(flashDrives) == 0 and connected == True:
                 connected = False

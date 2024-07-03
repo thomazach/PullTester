@@ -68,6 +68,7 @@ class GUI:
         after intializing the GUI. 
         NOTE: This is only safe to use when the system is not collecting data. """
         self.sensors = sensors
+
     ### Functions for commands ###
     def read(self):
 
