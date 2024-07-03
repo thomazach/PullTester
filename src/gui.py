@@ -27,7 +27,6 @@ class GUI:
         os.system("clear")
         self.drawGUI()
         
-
     def mainLoop(self):
         
         self.on = True
@@ -37,7 +36,6 @@ class GUI:
             if self.refresh:
                 self.drawGUI()
 
-        
     def recieveCommand(self):
 
         if self.pipeConnection.poll():
@@ -65,6 +63,11 @@ class GUI:
             self.on = False
             self.newCmd = None
 
+    def setSensors(self, sensors):
+        """Setter method for sensor object. Used to update the selected sensors
+        after intializing the GUI. 
+        NOTE: This is only safe to use when the system is not collecting data. """
+        self.sensors = sensors
     ### Functions for commands ###
     def read(self):
 
@@ -106,7 +109,7 @@ class GUI:
                 GUIString += f"Time elapsed: {now:.2f}\n"
 
         # Legend (display it always to show which sensors are connected)
-        GUIString += "Current Sensors:\n"
+        GUIString += "Selected Sensors:\n"
         for sensor, color in zip(self.sensors, self.config['colors']):
             GUIString += f"{color}{sensor.name} \033[0m\n"
 

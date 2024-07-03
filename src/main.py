@@ -19,81 +19,85 @@ baseDir = thisDir[0:thisDir.find("PullTester") + 10]
 sys.path.append(baseDir)
 os.chdir(baseDir)
 
+### Sensor Imports ###
 from sensors.sinSensor import sinSensor
 from sensors.cosSensor import cosSensor
+
+### Core Component Imports ###
 from src.gui import GUI
+from src.dataCollector import dataCollector
 
-### Data collection functions ###
-def sensorWrapper(sensors, dataQueue, commandPipe, settingsDict):
-    """This function facilitates the reading of sensors when requested. Its been seperated from the
-    read() method of each unique sensor class to reduce repeated code and make the creation of new 
-    custom sensors easier.
+# ### Data collection functions ###
+# def sensorWrapper(sensors, dataQueue, commandPipe, settingsDict):
+#     """This function facilitates the reading of sensors when requested. Its been seperated from the
+#     read() method of each unique sensor class to reduce repeated code and make the creation of new 
+#     custom sensors easier.
     
-    Input:
-        sensors: 
-            A list where each element is an object representing a sensor with the required constants and
-            read() method (see sensors/Custom Sensor Format/SensorNameHere.py)
-        dataQueue:
-            The multiprocessing.Queue assigned to store this sensors data
-        commandPipe:
-            Pipe used to recieve collect, stop, and shutdown commands
+#     Input:
+#         sensors: 
+#             A list where each element is an object representing a sensor with the required constants and
+#             read() method (see sensors/Custom Sensor Format/SensorNameHere.py)
+#         dataQueue:
+#             The multiprocessing.Queue assigned to store this sensors data
+#         commandPipe:
+#             Pipe used to recieve collect, stop, and shutdown commands
     
-    Output:
-        val: int, or float
-            Raw sensor value, val is not directly returned, but instead put into the dataQueue
+#     Output:
+#         val: int, or float
+#             Raw sensor value, val is not directly returned, but instead put into the dataQueue
             
-    """
+#     """
 
-    # Find lowest read speed
-    if settingsDict['sampleRate'] == None:
-        maxReadFrequency = []
-        for sensor in sensors:
-            maxReadFrequency += [sensor.maxReadFrequency]
-        maxReadFrequency = min(maxReadFrequency)
-    else:
-        if isinstance(settingsDict['sampleRate'], (float, int)):
-            maxReadFrequency = settingsDict['sampleRate']
-        else:
-            raise ValueError("Bad sampleRate value in config.yaml, must be of type int or float.")
+#     # Find lowest read speed
+#     if settingsDict['sampleRate'] == None:
+#         maxReadFrequency = []
+#         for sensor in sensors:
+#             maxReadFrequency += [sensor.maxReadFrequency]
+#         maxReadFrequency = min(maxReadFrequency)
+#     else:
+#         if isinstance(settingsDict['sampleRate'], (float, int)):
+#             maxReadFrequency = settingsDict['sampleRate']
+#         else:
+#             print(f"ERROR: Bad sampleRate value in config.yaml, must be of type int or float.")
 
-    # Setup logic for this process and start listening for commands
-    shutDown = False
-    beginRead = False
-    newCmd = None
-    while not shutDown:
+#     # Setup logic for this process and start listening for commands
+#     shutDown = False
+#     beginRead = False
+#     newCmd = None
+#     while not shutDown:
 
-        if commandPipe.poll():
-            newCmd = commandPipe.recv()
+#         if commandPipe.poll():
+#             newCmd = commandPipe.recv()
 
-        # Use if instead of match due to python 3.9.2
+#         # Use if instead of match due to python 3.9.2
 
-        if newCmd == "read":
-            startTime = time.time()
-            beginRead = True
+#         if newCmd == "read":
+#             startTime = time.time()
+#             beginRead = True
 
-        if newCmd == "stop":
-            beginRead = False
+#         if newCmd == "stop":
+#             beginRead = False
 
-        if newCmd == "off":
-            shutDown = True
-            break
-        newCmd = None # Makes each of these cases run once uppon recieving a new command
+#         if newCmd == "off":
+#             shutDown = True
+#             break
+#         newCmd = None # Makes each of these cases run once uppon recieving a new command
 
-        if beginRead:
-            data = [time.time() - startTime]
-            for sensor in sensors:
-                val = None
-                # Convert if requested, default to storing raw values
-                if settingsDict['convert'] == True:
-                    data += [sensor.convert(sensor.read())]
-                else:
-                    data += [sensor.read()]
+#         if beginRead:
+#             data = [time.time() - startTime]
+#             for sensor in sensors:
+#                 val = None
+#                 # Convert if requested, default to storing raw values
+#                 if settingsDict['convert'] == True:
+#                     data += [sensor.convert(sensor.read())]
+#                 else:
+#                     data += [sensor.read()]
 
-            dataQueue.put(data)
-            time.sleep(1 / maxReadFrequency)
-            continue
+#             dataQueue.put(data)
+#             time.sleep(1 / maxReadFrequency)
+#             continue
 
-        time.sleep(0.1) # Check if we should be reading sensors every tenth of a second
+#         time.sleep(0.1) # Check if we should be reading sensors every tenth of a second
 
 def queueReader(dataQueue):
     """Reads from a queue and centralizes the information into a multi dimensional array.
@@ -168,7 +172,7 @@ def main():
     
     # return
 
-    ### Load from config file
+    ### Load settings from default config file ###
     with open("config.yaml", "r") as f:
         settingsDict = yaml.safe_load(f)
 
@@ -181,19 +185,19 @@ def main():
         if className == "cosSensor":
             selectedSensors += [cosSensor()]
     
-    ### Create GUI process
+    ### Create GUI process ###
     guiQueue = Queue()
     guiParent, guiChild = Pipe()
     terminalGUI = GUI(guiChild, guiQueue, selectedSensors)
     Process(target=terminalGUI.mainLoop).start()
 
-    ### Create sensor process
+    ### Create sensor process ###
     sensorQueue = Queue()
     parentPipe, childPipe = Pipe()
-    parentCommandPipes = [parentPipe]
-    Process(target=sensorWrapper, args=(selectedSensors, sensorQueue, childPipe, settingsDict)).start()
+    sensorReader = dataCollector(selectedSensors, sensorQueue, childPipe, settingsDict)
+    Process(target=sensorReader.mainLoop).start()
 
-    ### Create control input thread for the reterminal
+    ### Create control input thread for the reterminal ###
     reterminalButtonDevice = rt.get_button_device()
     reterminalThread = threading.Thread(target=reterminalControls, args=(reterminalButtonDevice,))
     reterminalThread.start()
@@ -208,11 +212,37 @@ def main():
     
     while True:
 
+        ### Flash drive detection ###
+        if not doCollect: # Do only when not collecting because updating settings while gui and sensor processes are running is not safe
+            flashDrives = glob.glob("/media/pulltester/*")
+
+            if len(flashDrives) >= 1 and connected == False:
+                connected = True
+                print(f"Detected new flash drive at: {flashDrives[0]}    Searching for config.yaml file")
+                yamlFilePath = glob.glob(f"{flashDrives[0]}/config.yaml")[0]
+
+                # Get the settings in config.yaml on the flash drive
+                with open(yamlFilePath, "r") as f:
+                    settingsDict = yaml.safe_load(f)
+                
+                # Update the sensor process
+
+
+                # Update the GUI process
+                terminalGUI.setSensors(settingsDict['selectedSensors'])
+
+            elif len(flashDrives) == 0 and connected == True:
+                connected = False
+                print("Flash drive was disconnected.")
+
+
+
+        # Begin collection
         if doCollect:
             if firstCollection:
                 runNumber += 1
                 firstCollection = False
-                pipeMessager(parentCommandPipes + [guiParent], "read")
+                pipeMessager([parentPipe, guiParent], "read")
                 time.sleep(0.1)
                 data = queueReader(sensorQueue)
 
@@ -222,10 +252,11 @@ def main():
                 data += newData
                 guiQueue.put(data)
 
+        # Stop collection
         elif firstCollection == False:
             # Stop collection with messaging and logic vars
             firstCollection = True
-            pipeMessager(parentCommandPipes + [guiParent], "stop")
+            pipeMessager([parentPipe, guiParent], "stop")
 
             # Determine if flash drive is plugged in
             flashDrives = glob.glob("/media/pulltester/*")
