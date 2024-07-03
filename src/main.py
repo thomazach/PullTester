@@ -161,7 +161,8 @@ def main():
                 time.sleep(0.5)
                 yamlFilePath = glob.glob(f"{flashDrives[0]}/config.yaml")
 
-                if len(yamlFilePath) != 0: # There is a custom config.yaml file on the flash drive 
+                if len(yamlFilePath) != 0: # There is a custom config.yaml file on the flash drive
+                    print("Found a config file on the flashdrive, this config will be used while flashdrive is connected.")
                     # Get the settings in config.yaml on the flash drive
                     settingsDict = loadYaml(yamlFilePath)
                     selectedSensors = getSelectedSensors(settingsDict['selectedSensors'])
@@ -182,9 +183,21 @@ def main():
 
             elif len(flashDrives) == 0 and connected == True:
                 connected = False
-                print("Flash drive was disconnected.")
+                print("Flash drive was disconnected, using the defualt config file.")
 
+                ### Load default settings and apply them to the GUI and data collection processes ###
+                settingsDict = loadYaml("config.yaml")
+                selectedSensors = getSelectedSensors(settingsDict['selectedSensors'])
 
+                # Update the sensor process
+                parentPipe.send("set sensors")
+                parentPipe.send(selectedSensors)
+                parentPipe.send("set settings")
+                parentPipe.send(settingsDict)
+
+                # Update the GUI process
+                guiParent.send("set sensors")
+                guiParent.send(selectedSensors)
 
         # Begin collection
         if doCollect:
