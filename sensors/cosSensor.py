@@ -13,6 +13,9 @@ class cosSensor:
         self.time = 0. # Counter for sin
         # Connect/intialize with a sensor
     
+    def initInProcess(self):
+        """Run initialization commands when this sensor is accessed by the data collection process"""
+        pass
 
     def read(self):
         
@@ -21,4 +24,4 @@ class cosSensor:
         return val
     
     def convert(self, val):
-        return val * 10
+        return val * 13

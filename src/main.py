@@ -22,6 +22,7 @@ os.chdir(baseDir)
 ### Sensor Imports ###
 from sensors.sinSensor import sinSensor
 from sensors.cosSensor import cosSensor
+from sensors.hx711LoadCell import hx711LoadCell
 
 ### Core Component Imports ###
 from src.gui import GUI
@@ -44,6 +45,9 @@ def getSelectedSensors(sensorNames: list[str]):
         
         elif sensorName == "cosSensor":
             selectedSensors += [cosSensor()]
+
+        elif sensorName == "hx711LoadCell":
+            selectedSensors += [hx711LoadCell()]
 
     return selectedSensors
 

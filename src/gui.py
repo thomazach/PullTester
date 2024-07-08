@@ -21,7 +21,8 @@ class GUI:
         self.config = {'colors': [acp.red, acp.green, acp.yellow, acp.blue,  # All colors available to asciichartpy
                      acp.magenta, acp.cyan, acp.lightgray, acp.default,
                      acp.darkgray, acp.lightred, acp.lightgreen, acp.lightyellow,
-                     acp.lightblue, acp.lightmagenta, acp.lightcyan, acp.white]}
+                     acp.lightblue, acp.lightmagenta, acp.lightcyan, acp.white],
+                     'height': 27} # Maximum number of rows that can fit on screen with other GUI elements
         
         # Draw first frame on start up, clear the console for more consistent printing
         os.system("clear")
@@ -113,7 +114,7 @@ class GUI:
         # Legend (display it always to show which sensors are connected)
         GUIString += "Selected Sensors:\n"
         for sensor, color in zip(self.sensors, self.config['colors']):
-            GUIString += f"{color}{sensor.name} \033[0m\n"
+            GUIString += f"{color}{sensor.name} \033[0m   "
 
         print(GUIString)
 

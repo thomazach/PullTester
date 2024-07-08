@@ -22,8 +22,12 @@ class SensorNameHere:
         
         # Connect/intialize with a sensor
     
+    def initInProcess(self):
+        """Run initialization commands when this sensor is accessed by the data collection process"""
+        pass
+
     def read(self):
-        "Read data from the sensor"
+        'Read data from the sensor. If the sensor has a problem with reading, you can return float("nan") to not plot anything'
         pass
 
     def convert(self, value):

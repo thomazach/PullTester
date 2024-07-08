@@ -14,6 +14,10 @@ class sinSensor:
 
         # Connect/intialize with a sensor
     
+    def initInProcess(self):
+        """Run initialization commands when this sensor is accessed by the data collection process"""
+        pass
+
     def read(self): 
 
         val = math.sin(self.time)

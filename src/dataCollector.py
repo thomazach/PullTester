@@ -1,4 +1,5 @@
 import time
+import RPi.GPIO as gpio
 
 class dataCollector:
     """This class facilitates the reading of sensors when requested. Its been seperated from the
@@ -62,7 +63,16 @@ class dataCollector:
         NOTE: This is only safe to use when the system is not collecting data. """
         self.sensors = sensors
 
+        for sensor in self.sensors:
+            sensor.initInProcess()
+
     def mainLoop(self):
+
+        """At this point, this class becomes a process, and initialization functions that
+        should be run in the new process should be called now."""
+
+        for sensor in self.sensors:
+            sensor.initInProcess()
 
         while not self.shutDown:
 
@@ -92,7 +102,6 @@ class dataCollector:
             if self.beginRead:
                 data = [time.time() - startTime]
                 for sensor in self.sensors:
-                    val = None
                     # Convert if requested, default to storing raw values
                     if self.settingsDict['convert'] == True:
                         data += [sensor.convert(sensor.read())]
