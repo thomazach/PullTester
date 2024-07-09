@@ -1,8 +1,6 @@
 columnNames:
-- Sin
-- Cos
+- hx711LoadCell
 convert: true
-sampleRate: null
+sampleRate: 80
 selectedSensors:
-- sinSensor
-- cosSensor
+- hx711LoadCell
