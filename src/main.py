@@ -108,21 +108,31 @@ def reterminalControls(buttonDevice):
             if str(buttonEvent.name) == "ButtonName.O":
                 doCollect = not doCollect # Toggle doCollect between true and false
 
+def updateSystem(configPath: str, oldSensors, dataPipe, GUIPipe):
+    """Updates entire system with new configuration settings specified in config.yaml"""
+
+    for sensor in oldSensors:
+        sensor.reset()
+
+    settingsDict = loadYaml(configPath)
+    selectedSensors = getSelectedSensors(settingsDict['selectedSensors'])
+                
+    # Update the sensor process
+    dataPipe.send("set sensors")
+    dataPipe.send(selectedSensors)
+    dataPipe.send("set settings")
+    dataPipe.send(settingsDict)
+
+    # Update the GUI process
+    GUIPipe.send("set sensors")
+    GUIPipe.send(selectedSensors)
+
+    return selectedSensors # Return the sensors so that they can be passed back into this function if the flashdrive is plugged back in
+    
+
 # Global scope variable used for terminal control
 doCollect = False
 def main():
-
-    # """Dev thing to correctly format yaml file with new test variables"""
-    # settingsDict = {'selectedSensors': ["cosSensor", "sinSensor"],
-    #  'convert': False,
-    #  'sampleRate': None,
-    #  'columnNames': ["Cos", "Sin"]
-    # }
-    
-    # with open("config.yaml", "w") as f:
-    #     yaml.dump(settingsDict, f)
-    
-    # return
 
     ### Load settings from default config file ###
     settingsDict = loadYaml("config.yaml")
@@ -167,19 +177,8 @@ def main():
 
                 if len(yamlFilePath) != 0: # There is a custom config.yaml file on the flash drive
                     print("Found a config file on the flashdrive, this config will be used while flashdrive is connected.")
-                    # Get the settings in config.yaml on the flash drive
-                    settingsDict = loadYaml(yamlFilePath[0])
-                    selectedSensors = getSelectedSensors(settingsDict['selectedSensors'])
-                                
-                    # Update the sensor process
-                    parentPipe.send("set sensors")
-                    parentPipe.send(selectedSensors)
-                    parentPipe.send("set settings")
-                    parentPipe.send(settingsDict)
-
-                    # Update the GUI process
-                    guiParent.send("set sensors")
-                    guiParent.send(selectedSensors)
+                    
+                    selectedSensors = updateSystem(yamlFilePath[0], selectedSensors, parentPipe, guiParent)
 
                 else: # There isn't a custom yaml file and we need to put a copy of the default one onto the flash drive
                     print("The config.yaml file couldn't be found on the first level of the flashdrive. A copy of the default configuration has been copied to the flashdrive.")
@@ -190,19 +189,8 @@ def main():
                 connected = False
                 print("Flash drive was disconnected, using the defualt config file.")
 
-                ### Load default settings and apply them to the GUI and data collection processes ###
-                settingsDict = loadYaml("config.yaml")
-                selectedSensors = getSelectedSensors(settingsDict['selectedSensors'])
+                selectedSensors = updateSystem("config.yaml", selectedSensors, parentPipe, guiParent)
 
-                # Update the sensor process
-                parentPipe.send("set sensors")
-                parentPipe.send(selectedSensors)
-                parentPipe.send("set settings")
-                parentPipe.send(settingsDict)
-
-                # Update the GUI process
-                guiParent.send("set sensors")
-                guiParent.send(selectedSensors)
 
         # Begin collection
         if doCollect:
@@ -210,8 +198,11 @@ def main():
                 runNumber += 1
                 firstCollection = False
                 pipeMessager([parentPipe, guiParent], "read")
-                time.sleep(0.1)
-                data = queueReader(sensorQueue)
+                
+                # Wait for actual data to arrive
+                data = None
+                while data == None:
+                    data = queueReader(sensorQueue)
 
             newData = queueReader(sensorQueue)
 
