@@ -26,6 +26,12 @@ class SensorNameHere:
         """Run initialization commands when this sensor is accessed by the data collection process"""
         pass
 
+    def reset(self):
+        """The reset function sets the sensor number for the entire class to 0. This is necessary to make
+        the flashdrive "plug and play" while supporting multiple sensors of the same type that have different
+        pin assignments."""
+        self.__class__.sensorNum = 0
+
     def read(self):
         'Read data from the sensor. If the sensor has a problem with reading, you can return float("nan") to not plot anything'
         pass
