@@ -34,7 +34,7 @@
 * The pull tester will automatically relaunch the python script on reboot, ssh connection, and the creation of a new terminal window. This means that if you run into an error, power cycling the system should restore it directly to a useable state.
 * If you run the pull tester without a flash drive plugged in, the data will be stored on the pull tester at `$HOME/PullTester/Data` in the same format as it would have been saved on a flash drive.
 * You can simply attach a mouse and keyboard to the pull tester over USB to use it like a normal raspi.
-* If connected to ethernet on Caltech Secure, you can connect via ssh to retrieve data if no flash drive was present using the terminal command: `ssh pulltester@DISPLAYED-IP`. The IP of the pull tester is displayed in the terminal GUI. Note that it will display 2 IPs if on ethernet, the first is the Caltech Secure IP, and the second is the wireless IP for Caltech Visitors. Additionally, you will need to ctrl-C after ssh-ing into it.
+* If connected to ethernet on Caltech Secure, you can connect via ssh to retrieve data if no flash drive was present using the terminal command: `ssh pulltester@DISPLAYED-IP`. The IP of the pull tester is displayed in the terminal GUI along with the password. Note that it will display 2 IPs if on ethernet, the first is the Caltech Secure IP, and the second is the wireless IP for Caltech Visitors. Additionally, you will need to ctrl-C after ssh-ing into it.
   
 # Adding Your Own Sensor
 Adding your own sensor does not require an in-depth understanding of the software's architecture. The critical task is to create a python class and place it in the `sensors` folder on the pull tester. This class must have an attribute called `sensorNum`, and several methods with specific names.
