@@ -1,9 +1,9 @@
 # Pull Tester
 
 ## Contents
-1. [Quick Start Guide]()
-2. [Adding Your Own Sensor]()
-3. [Documentation]()
+1. [Quick Start Guide](https://github.com/thomazach/PullTester/tree/main#quick-start-guide)
+2. [Adding Your Own Sensor](https://github.com/thomazach/PullTester/tree/main#adding-your-own-sensor)
+3. [Documentation](https://github.com/thomazach/PullTester/tree/main#documentation)
 
 # Quick Start Guide
 ## If you just want to use the pull tester to measure the force on the optic:
