@@ -87,14 +87,14 @@ class GUI:
         GUIString = "Pull Tester \nCurrent LAN accessible IP: "
         ip = subprocess.run(["hostname", "-I"], stdout=subprocess.PIPE).stdout.decode('utf-8')[:-2] # Removes the \n
         GUIString += ip
+        GUIString += "   ssh password: "
+        password = subprocess.run(["whoami"], stdout=subprocess.PIPE).stdout.decode('utf-8')[:-1]
+        GUIString += password
 
         ## Button reminder/instructions
         GUIString += f"        Press the {acp.lightgreen}O{acp.reset} button to begin/stop collecting data.\n"
         GUIString += f"Run {self.runNumber}\n"
-
-        # TODO: Print IP address
-        # TODO: Print available and selected sensors
-
+        
         # Create graph data
         if self.startTime != None:
             terminalGraphData = [0]
