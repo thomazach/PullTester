@@ -54,6 +54,10 @@ class hx711LoadCell:
             if abs(self.recentData[0] - self.recentData[1]) > 300000 and abs(self.recentData[1] - self.recentData[2]) > 300000:# and abs(self.recentData[0] - self.recentData[2]) < 1000000:
                 # if middle value is a large change relative to the first, and if the middle value is a large change realtive to the third, and the first and third data points are similar
                 self.recentData[1] = (self.recentData[0] + self.recentData[2])/2 # Make the bad data the mean of the surrounding points
+
+            # Low pass extreme changes to lessen the impact of sensor noise not caught by the above filter
+            elif abs(self.recentData[0] - self.recentData[1]) > 500000:
+                self.recentData[1] = self.recentData[0] + 0.05 * (self.recentData[1] - self.recentData[0])
             
             val = self.recentData[0]
             self.recentData.pop(0)
