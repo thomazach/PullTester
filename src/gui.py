@@ -74,15 +74,24 @@ class GUI:
     ### Functions for commands ###
     def read(self):
 
-        while not self.dataQueue.empty():
-            self.data = self.dataQueue.get()
+        dataInQueue = True
+        vals = None
+        while dataInQueue:
+            try:
+                vals = self.dataQueue.get(timeout=0.000000001)
+            except:
+                dataInQueue = False
+                break
+        
+        if vals != None:
+            self.data = vals
 
     def drawGUI(self):
         """Draws a single 'frame' of the GUI.
         Note: It's important to create a single string to print once, so that terminal
         autoscroll is minimized and reaches a 'steady state' where the terminal tries to get
         all of the new information in the window."""
-
+        #return
         ## Header information ##
         GUIString = "Pull Tester \nCurrent LAN accessible IP: "
         ip = subprocess.run(["hostname", "-I"], stdout=subprocess.PIPE).stdout.decode('utf-8')[:-2] # Removes the \n
@@ -101,7 +110,7 @@ class GUI:
 
             if self.data != None:
                 now = time.time() - self.startTime
-                terminalGraphData = np.array(self.data)[-125:, 1:].T.tolist()
+                terminalGraphData = np.array(self.data)[:, 1:].T.tolist()
 
             # Print/display graph data
             GUIString += acp.plot(terminalGraphData, self.config) + '\n'

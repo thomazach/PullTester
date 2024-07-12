@@ -9,6 +9,7 @@ import glob
 
 from multiprocessing import Process, Queue, Pipe
 from datetime import datetime, timedelta
+from line_profiler import profile
 
 import seeed_python_reterminal.core as rt
 import seeed_python_reterminal.button as rtButton
@@ -51,6 +52,7 @@ def getSelectedSensors(sensorNames: list[str]):
 
     return selectedSensors
 
+@profile
 def queueReader(dataQueue):
     """Reads from a queue and centralizes the information into a multi dimensional array.
     Input:
@@ -60,15 +62,20 @@ def queueReader(dataQueue):
     Output:"""
 
     queueData = []
-    while not dataQueue.empty(): # TODO: Figure out if this will hang if reading a high Hz sensor
-        vals = dataQueue.get()
-        queueData += [vals]
+    dataInQueue = True
+    while dataInQueue:
+        try:
+            vals = dataQueue.get(timeout=0.000000001)
+            queueData += [vals]
+        except:
+            dataInQueue = False
+            break
 
     if queueData == []:
         return None
 
     return queueData
-           
+    
 def pipeMessager(pipes, command):
     """ Send the same command to several different pipes. """
 
@@ -132,6 +139,7 @@ def updateSystem(configPath: str, oldSensors, dataPipe, GUIPipe):
 
 # Global scope variable used for terminal control
 doCollect = False
+@profile
 def main():
 
     ### Load settings from default config file ###
@@ -207,8 +215,13 @@ def main():
             newData = queueReader(sensorQueue)
 
             if newData != None:
+
                 data += newData
-                guiQueue.put(data)
+
+                if len(data) < 124: # Time to beat for this block: 643.3
+                    guiQueue.put(data)
+                else:
+                    guiQueue.put(data[-125:])
 
         # Stop collection
         elif firstCollection == False:

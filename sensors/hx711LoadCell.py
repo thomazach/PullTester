@@ -1,5 +1,6 @@
 import RPi.GPIO as GPIO
 from hx711 import HX711
+from line_profiler import profile
 
 class hx711LoadCell:
     sensorNum = 0
@@ -38,6 +39,7 @@ class hx711LoadCell:
         pin assignments."""
         self.__class__.sensorNum = 0
 
+    @profile
     def read(self):
         "Read raw data from the sensor"
 

@@ -1,5 +1,7 @@
 import time
 import RPi.GPIO as gpio
+import cProfile
+from line_profiler import profile
 
 class dataCollector:
     """This class facilitates the reading of sensors when requested. Its been seperated from the
@@ -67,7 +69,6 @@ class dataCollector:
             sensor.initInProcess()
 
     def mainLoop(self):
-
         """At this point, this class becomes a process, and initialization functions that
         should be run in the new process should be called now."""
 
@@ -81,7 +82,7 @@ class dataCollector:
 
             # Use if instead of match due to python 3.9.2
             if self.newCmd == "read":
-                startTime = time.time()
+                self.startTime = time.time()
                 self.beginRead = True
 
             if self.newCmd == "stop":
@@ -100,16 +101,21 @@ class dataCollector:
             self.newCmd = None # Makes each of these cases run once uppon recieving a new command
 
             if self.beginRead:
-                data = [time.time() - startTime]
-                for sensor in self.sensors:
-                    # Convert if requested, default to storing raw values
-                    if self.settingsDict['convert'] == True:
-                        data += [sensor.convert(sensor.read())]
-                    else:
-                        data += [sensor.read()]
-
-                self.dataQueue.put(data)
-                time.sleep(1 / self.maxReadFrequency)
+                self.collectData()
                 continue
+            else:
+                time.sleep(0.1) # Check if we should be reading sensors every tenth of a second
 
-            time.sleep(0.1) # Check if we should be reading sensors every tenth of a second
+    @profile
+    def collectData(self):
+        data = [time.time() - self.startTime]
+        for sensor in self.sensors:
+            # Convert if requested, default to storing raw values
+            if self.settingsDict['convert'] == True:
+                data += [sensor.convert(sensor.read())]
+            else:
+                data += [sensor.read()]
+
+        self.dataQueue.put(data)
+        time.sleep(1 / self.maxReadFrequency)
+
