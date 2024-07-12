@@ -217,11 +217,7 @@ def main():
             if newData != None:
 
                 data += newData
-
-                if len(data) < 124: # Time to beat for this block: 643.3
-                    guiQueue.put(data)
-                else:
-                    guiQueue.put(data[-125:])
+                guiQueue.put(data)
 
         # Stop collection
         elif firstCollection == False:

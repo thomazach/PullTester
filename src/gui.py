@@ -110,7 +110,7 @@ class GUI:
 
             if self.data != None:
                 now = time.time() - self.startTime
-                terminalGraphData = np.array(self.data)[:, 1:].T.tolist()
+                terminalGraphData = np.array(self.data)[-125:, 1:].T.tolist()
 
             # Print/display graph data
             GUIString += acp.plot(terminalGraphData, self.config) + '\n'
