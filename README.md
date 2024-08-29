@@ -12,8 +12,9 @@
 3. Push the physical green button with a circle in the bottom right to start collecting data
 4. Push the same button to stop collecting data
 5. The collected data will be written to a csv file on the flash drive inside of time labeled subfolders. At the highest level of the flash drive, the file structure will be:
-<img width="216" alt="Screenshot 2024-07-09 at 1 52 58 PM" src="https://github.com/thomazach/PullTester/assets/86134403/874d6773-af26-4fdf-a460-e5e2322ab467">  
-  
+<img width="216" alt="Screenshot 2024-07-09 at 1 52 58 PM" src="https://github.com/thomazach/PullTester/assets/86134403/874d6773-af26-4fdf-a460-e5e2322ab467">
+
+If you are using the default HX711 sensor, the converted output will be in kilograms.  
 ## If you want to record data from sensor configurations that are more complicated:
 1. Get a flash drive
 2. Plug it into the Reterminal, and wait for a message saying that the default configuration file has been copied to the flash drive.
